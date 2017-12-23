@@ -116,12 +116,12 @@ func (p ECSPlugin) getLastPoint(metric metrics) (float64, error) {
 func (p ECSPlugin) FetchMetrics() (map[string]float64, error) {
 	stat := make(map[string]float64)
 
-	for name, _ := range p.GraphDefinition() {
+	for name := range p.GraphDefinition() {
 		for _, t := range []string{metricsTypeAverage, metricsTypeMinimum, metricsTypeMaximum} {
 			met := metrics{name, t}
 			v, err := p.getLastPoint(met)
 			if err == nil {
-				stat[name + t] = v
+				stat[name+t] = v
 			} else {
 				log.Printf("%s: %s", met, err)
 			}
