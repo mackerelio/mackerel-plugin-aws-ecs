@@ -16,7 +16,6 @@ import (
 
 const (
 	namespace          = "AWS/ECS"
-	region             = "ap-northeast-1"
 	metricsTypeAverage = "Average"
 	metricsTypeMinimum = "Minimum"
 	metricsTypeMaximum = "Maximum"
@@ -34,6 +33,7 @@ type ECSPlugin struct {
 	CloudWatch      *cloudwatch.CloudWatch
 	Name            string
 	Prefix          string
+	Region          string
 }
 
 // MetricKeyPrefix interface for PluginWithPrefix
@@ -54,7 +54,7 @@ func (p *ECSPlugin) prepare() error {
 	if p.AccessKeyID != "" && p.SecretAccessKey != "" {
 		config = config.WithCredentials(credentials.NewStaticCredentials(p.AccessKeyID, p.SecretAccessKey, ""))
 	}
-	config = config.WithRegion(region)
+	config = config.WithRegion(p.Region)
 
 	p.CloudWatch = cloudwatch.New(sess, config)
 
@@ -180,6 +180,7 @@ func Do() {
 	optSecretAccessKey := flag.String("secret-access-key", "", "AWS Secret Access Key")
 	optClusterName := flag.String("cluster-name", "", "Cluster name")
 	optPrefix := flag.String("metric-key-prefix", "ECS", "Metric key prefix")
+	optRegion := flag.String("region", "", "AWS region")
 	flag.Parse()
 
 	var plugin ECSPlugin
@@ -188,6 +189,7 @@ func Do() {
 	plugin.SecretAccessKey = *optSecretAccessKey
 	plugin.Name = *optClusterName
 	plugin.Prefix = *optPrefix
+	plugin.Region = *optRegion
 
 	err := plugin.prepare()
 	if err != nil {
