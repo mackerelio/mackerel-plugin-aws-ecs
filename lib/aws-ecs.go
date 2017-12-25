@@ -74,7 +74,6 @@ func (p ECSPlugin) getLastPoint(metric metrics) (float64, error) {
 	response, err := p.CloudWatch.GetMetricStatistics(&cloudwatch.GetMetricStatisticsInput{
 		Dimensions: dimensions,
 		StartTime:  aws.Time(now.Add(time.Duration(180) * time.Second * -1)), // 3 min (to fetch at least 1 data-point)
-		// StartTime:  aws.Time(now.Add(time.Duration(1800) * time.Second * -1)), // 3 min (to fetch at least 1 data-point)
 		EndTime:    aws.Time(now),
 		MetricName: aws.String(metric.Name),
 		Period:     aws.Int64(60),
@@ -86,7 +85,6 @@ func (p ECSPlugin) getLastPoint(metric metrics) (float64, error) {
 	}
 
 	datapoints := response.Datapoints
-	// fmt.Println(datapoints)
 	if len(datapoints) == 0 {
 		return 0, errors.New("fetched no datapoints")
 	}
