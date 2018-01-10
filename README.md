@@ -10,5 +10,5 @@
 
 ```
 [plugin.metrics.aws-ecs]
-command = "/path/to/mackerel-plugin-aws-batch -access-key-id XXX -secret-access-key YYY -metric-key-prefix MyECS -cluster-name MyClusterName -region ap-northeast-1"
+command = "/path/to/mackerel-plugin-aws-ecs -access-key-id XXX -secret-access-key YYY -metric-key-prefix MyECS -cluster-name MyClusterName -region ap-northeast-1"
 ```
