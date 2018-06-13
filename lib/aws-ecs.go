@@ -31,7 +31,7 @@ type ECSPlugin struct {
 	AccessKeyID     string
 	SecretAccessKey string
 	CloudWatch      *cloudwatch.CloudWatch
-	Name            string
+	ClusterName     string
 	Prefix          string
 	Region          string
 }
@@ -67,7 +67,7 @@ func (p ECSPlugin) getLastPoint(metric metrics) (float64, error) {
 	dimensions := []*cloudwatch.Dimension{
 		{
 			Name:  aws.String("ClusterName"),
-			Value: aws.String(p.Name),
+			Value: aws.String(p.ClusterName),
 		},
 	}
 
@@ -187,7 +187,7 @@ func Do() {
 
 	plugin.AccessKeyID = *optAccessKeyID
 	plugin.SecretAccessKey = *optSecretAccessKey
-	plugin.Name = *optClusterName
+	plugin.ClusterName = *optClusterName
 	plugin.Prefix = *optPrefix
 	plugin.Region = *optRegion
 
