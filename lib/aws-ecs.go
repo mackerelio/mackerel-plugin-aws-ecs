@@ -35,7 +35,6 @@ type ECSPlugin struct {
 	ServiceName     string
 	Prefix          string
 	Region          string
-	IsFargate       bool
 }
 
 // MetricKeyPrefix interface for PluginWithPrefix
@@ -71,10 +70,12 @@ func (p ECSPlugin) getLastPoint(metric metrics) (float64, error) {
 			Name:  aws.String("ClusterName"),
 			Value: aws.String(p.ClusterName),
 		},
-		{
+	}
+	if p.ServiceName != "" {
+		dimensions = append(dimensions, &cloudwatch.Dimension{
 			Name:  aws.String("ServiceName"),
 			Value: aws.String(p.ServiceName),
-		},
+		})
 	}
 
 	response, err := p.CloudWatch.GetMetricStatistics(&cloudwatch.GetMetricStatisticsInput{
@@ -160,29 +161,28 @@ func (p ECSPlugin) GraphDefinition() map[string]mp.Graphs {
 			},
 		},
 	}
-	if p.IsFargate {
-		return baseGraphs
-	} else {
-		baseGraphs["CPUReservation"] = mp.Graphs{
-			Label: labelPrefix + " CPUReservation",
-			Unit:  "percentage",
-			Metrics: []mp.Metrics{
-				{Name: "CPUReservationAverage", Label: "Average"},
-				{Name: "CPUReservationMinimum", Label: "Minimum"},
-				{Name: "CPUReservationMaximum", Label: "Maximum"},
-			},
-		}
-		baseGraphs["MemoryReservation"] = mp.Graphs{
-			Label: labelPrefix + " MemoryReservation",
-			Unit:  "percentage",
-			Metrics: []mp.Metrics{
-				{Name: "MemoryReservationAverage", Label: "Average"},
-				{Name: "MemoryReservationMinimum", Label: "Minimum"},
-				{Name: "MemoryReservationMaximum", Label: "Maximum"},
-			},
-		}
+	if p.ServiceName != "" {
 		return baseGraphs
 	}
+	baseGraphs["CPUReservation"] = mp.Graphs{
+		Label: labelPrefix + " CPUReservation",
+		Unit:  "percentage",
+		Metrics: []mp.Metrics{
+			{Name: "CPUReservationAverage", Label: "Average"},
+			{Name: "CPUReservationMinimum", Label: "Minimum"},
+			{Name: "CPUReservationMaximum", Label: "Maximum"},
+		},
+	}
+	baseGraphs["MemoryReservation"] = mp.Graphs{
+		Label: labelPrefix + " MemoryReservation",
+		Unit:  "percentage",
+		Metrics: []mp.Metrics{
+			{Name: "MemoryReservationAverage", Label: "Average"},
+			{Name: "MemoryReservationMinimum", Label: "Minimum"},
+			{Name: "MemoryReservationMaximum", Label: "Maximum"},
+		},
+	}
+	return baseGraphs
 }
 
 // Do the plugin
@@ -193,7 +193,6 @@ func Do() {
 	optServiceName := flag.String("service-name", "", "Service name")
 	optPrefix := flag.String("metric-key-prefix", "ECS", "Metric key prefix")
 	optRegion := flag.String("region", "", "AWS region")
-	optIsFargate := flag.Bool("is-fargate", false, "Fargate launch type")
 	flag.Parse()
 
 	var plugin ECSPlugin
@@ -204,7 +203,6 @@ func Do() {
 	plugin.ServiceName = *optServiceName
 	plugin.Prefix = *optPrefix
 	plugin.Region = *optRegion
-	plugin.IsFargate = *optIsFargate
 
 	err := plugin.prepare()
 	if err != nil {
