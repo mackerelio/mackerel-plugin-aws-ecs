@@ -32,6 +32,7 @@ type ECSPlugin struct {
 	SecretAccessKey string
 	CloudWatch      *cloudwatch.CloudWatch
 	ClusterName     string
+	ServiceName     string
 	Prefix          string
 	Region          string
 }
@@ -68,6 +69,10 @@ func (p ECSPlugin) getLastPoint(metric metrics) (float64, error) {
 		{
 			Name:  aws.String("ClusterName"),
 			Value: aws.String(p.ClusterName),
+		},
+		{
+			Name:  aws.String("ServiceName"),
+			Value: aws.String(p.ServiceName),
 		},
 	}
 
@@ -179,6 +184,7 @@ func Do() {
 	optAccessKeyID := flag.String("access-key-id", "", "AWS Access Key ID")
 	optSecretAccessKey := flag.String("secret-access-key", "", "AWS Secret Access Key")
 	optClusterName := flag.String("cluster-name", "", "Cluster name")
+	optServiceName := flag.String("service-name", "", "Service name")
 	optPrefix := flag.String("metric-key-prefix", "ECS", "Metric key prefix")
 	optRegion := flag.String("region", "", "AWS region")
 	flag.Parse()
@@ -188,6 +194,7 @@ func Do() {
 	plugin.AccessKeyID = *optAccessKeyID
 	plugin.SecretAccessKey = *optSecretAccessKey
 	plugin.ClusterName = *optClusterName
+	plugin.ServiceName = *optServiceName
 	plugin.Prefix = *optPrefix
 	plugin.Region = *optRegion
 
