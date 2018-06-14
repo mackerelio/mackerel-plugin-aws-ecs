@@ -15,10 +15,11 @@ import (
 )
 
 const (
-	namespace          = "AWS/ECS"
-	metricsTypeAverage = "Average"
-	metricsTypeMinimum = "Minimum"
-	metricsTypeMaximum = "Maximum"
+	namespace              = "AWS/ECS"
+	metricsTypeAverage     = "Average"
+	metricsTypeMinimum     = "Minimum"
+	metricsTypeMaximum     = "Maximum"
+	metricsTypeSampleCount = "SampleCount"
 )
 
 type metrics struct {
@@ -110,6 +111,8 @@ func (p ECSPlugin) getLastPoint(metric metrics) (float64, error) {
 				latestVal = *dp.Minimum
 			case metricsTypeMaximum:
 				latestVal = *dp.Maximum
+			case metricsTypeSampleCount:
+				latestVal = *dp.SampleCount
 			}
 		}
 	}
@@ -122,6 +125,17 @@ func (p ECSPlugin) FetchMetrics() (map[string]float64, error) {
 	stat := make(map[string]float64)
 
 	for name := range p.GraphDefinition() {
+		if name == "Task" {
+			met := metrics{"CPUUtilization", metricsTypeSampleCount}
+			v, err := p.getLastPoint(met)
+			if err == nil {
+				stat[name+"Running"] = v
+			} else {
+				log.Printf("%s: %s", met, err)
+			}
+			continue
+		}
+
 		for _, t := range []string{metricsTypeAverage, metricsTypeMinimum, metricsTypeMaximum} {
 			met := metrics{name, t}
 			v, err := p.getLastPoint(met)
@@ -162,6 +176,13 @@ func (p ECSPlugin) GraphDefinition() map[string]mp.Graphs {
 		},
 	}
 	if p.ServiceName != "" {
+		baseGraphs["Task"] = mp.Graphs{
+			Label: labelPrefix + " Task",
+			Unit:  "integer",
+			Metrics: []mp.Metrics{
+				{Name: "TaskRunning", Label: "Running"},
+			},
+		}
 		return baseGraphs
 	}
 	baseGraphs["CPUReservation"] = mp.Graphs{
