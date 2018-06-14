@@ -31,7 +31,8 @@ type ECSPlugin struct {
 	AccessKeyID     string
 	SecretAccessKey string
 	CloudWatch      *cloudwatch.CloudWatch
-	Name            string
+	ClusterName     string
+	ServiceName     string
 	Prefix          string
 	Region          string
 }
@@ -67,8 +68,14 @@ func (p ECSPlugin) getLastPoint(metric metrics) (float64, error) {
 	dimensions := []*cloudwatch.Dimension{
 		{
 			Name:  aws.String("ClusterName"),
-			Value: aws.String(p.Name),
+			Value: aws.String(p.ClusterName),
 		},
+	}
+	if p.ServiceName != "" {
+		dimensions = append(dimensions, &cloudwatch.Dimension{
+			Name:  aws.String("ServiceName"),
+			Value: aws.String(p.ServiceName),
+		})
 	}
 
 	response, err := p.CloudWatch.GetMetricStatistics(&cloudwatch.GetMetricStatisticsInput{
@@ -134,16 +141,7 @@ func (p ECSPlugin) GraphDefinition() map[string]mp.Graphs {
 	labelPrefix := strings.Title(p.Prefix)
 	labelPrefix = strings.Replace(labelPrefix, "-", " ", -1)
 
-	return map[string]mp.Graphs{
-		"CPUReservation": {
-			Label: labelPrefix + " CPUReservation",
-			Unit:  "percentage",
-			Metrics: []mp.Metrics{
-				{Name: "CPUReservationAverage", Label: "Average"},
-				{Name: "CPUReservationMinimum", Label: "Minimum"},
-				{Name: "CPUReservationMaximum", Label: "Maximum"},
-			},
-		},
+	baseGraphs := map[string]mp.Graphs{
 		"CPUUtilization": {
 			Label: labelPrefix + " CPUUtilization",
 			Unit:  "percentage",
@@ -151,15 +149,6 @@ func (p ECSPlugin) GraphDefinition() map[string]mp.Graphs {
 				{Name: "CPUUtilizationAverage", Label: "Average"},
 				{Name: "CPUUtilizationMinimum", Label: "Minimum"},
 				{Name: "CPUUtilizationMaximum", Label: "Maximum"},
-			},
-		},
-		"MemoryReservation": {
-			Label: labelPrefix + " MemoryReservation",
-			Unit:  "percentage",
-			Metrics: []mp.Metrics{
-				{Name: "MemoryReservationAverage", Label: "Average"},
-				{Name: "MemoryReservationMinimum", Label: "Minimum"},
-				{Name: "MemoryReservationMaximum", Label: "Maximum"},
 			},
 		},
 		"MemoryUtilization": {
@@ -172,6 +161,28 @@ func (p ECSPlugin) GraphDefinition() map[string]mp.Graphs {
 			},
 		},
 	}
+	if p.ServiceName != "" {
+		return baseGraphs
+	}
+	baseGraphs["CPUReservation"] = mp.Graphs{
+		Label: labelPrefix + " CPUReservation",
+		Unit:  "percentage",
+		Metrics: []mp.Metrics{
+			{Name: "CPUReservationAverage", Label: "Average"},
+			{Name: "CPUReservationMinimum", Label: "Minimum"},
+			{Name: "CPUReservationMaximum", Label: "Maximum"},
+		},
+	}
+	baseGraphs["MemoryReservation"] = mp.Graphs{
+		Label: labelPrefix + " MemoryReservation",
+		Unit:  "percentage",
+		Metrics: []mp.Metrics{
+			{Name: "MemoryReservationAverage", Label: "Average"},
+			{Name: "MemoryReservationMinimum", Label: "Minimum"},
+			{Name: "MemoryReservationMaximum", Label: "Maximum"},
+		},
+	}
+	return baseGraphs
 }
 
 // Do the plugin
@@ -179,6 +190,7 @@ func Do() {
 	optAccessKeyID := flag.String("access-key-id", "", "AWS Access Key ID")
 	optSecretAccessKey := flag.String("secret-access-key", "", "AWS Secret Access Key")
 	optClusterName := flag.String("cluster-name", "", "Cluster name")
+	optServiceName := flag.String("service-name", "", "Service name")
 	optPrefix := flag.String("metric-key-prefix", "ECS", "Metric key prefix")
 	optRegion := flag.String("region", "", "AWS region")
 	flag.Parse()
@@ -187,7 +199,8 @@ func Do() {
 
 	plugin.AccessKeyID = *optAccessKeyID
 	plugin.SecretAccessKey = *optSecretAccessKey
-	plugin.Name = *optClusterName
+	plugin.ClusterName = *optClusterName
+	plugin.ServiceName = *optServiceName
 	plugin.Prefix = *optPrefix
 	plugin.Region = *optRegion
 
