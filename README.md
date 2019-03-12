@@ -1,4 +1,4 @@
-# mackerel-plugin-aws-ecs
+# mackerel-plugin-aws-ecs [![Build Status](https://travis-ci.org/mackerelio/mackerel-plugin-aws-ecs.svg?branch=master)](https://travis-ci.org/mackerelio/mackerel-plugin-aws-ecs)
 
 ## Install
 
