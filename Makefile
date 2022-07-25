@@ -1,12 +1,12 @@
+.PHONY: setup
 setup:
-	go get \
-		github.com/laher/goxc \
-		github.com/tcnksm/ghr \
-		golang.org/x/lint/golint
-	go get -d -t ./...
+	go install golang.org/x/lint/golint@latest
 
+.PHONY: test
+test: setup
+	go test -v ./...
+
+.PHONY: lint
 lint: setup
 	go vet ./...
 	golint -set_exit_status ./...
-
-.PHONY: setup lint
